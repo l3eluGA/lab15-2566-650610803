@@ -44,8 +44,10 @@ const schema = z
     }),
     hasCoupon: z.boolean(),
     coupon: z.string(),
-    password: z.string(),
-    confirmPassword: z.string(),
+    password: z.string().min(6, { message: "Password must contain at least 6 characters" })
+    .max(12, { message: "Password must not exceed 12 characters" }),
+    confirmPassword: z.string().min(6, { message: "Password must contain at least 6 characters" })
+    .max(12, { message: "Password must not exceed 12 characters" }),
   })
   .refine(
     //refine let you check error in your own way
@@ -63,8 +65,24 @@ const schema = z
       message: "Invalid coupon code",
       path: ["coupon"],
     }
-  );
-
+  )
+  .refine(
+    //refine let you check error in your own way
+    //in this example, we check "hasCoupon" with "coupon" fields
+    (data) => {
+      // if user does not tick "I have coupon", then it's ok
+      //if (!data.hasCoupon) return true;
+      // if user tick "I have coupon" and fill correct code, then it's ok too
+      if (data.confirmPassword === data.password ) return true;
+      // ticking "I have coupon" but fill wrong coupon code, show error
+      //return false;
+    },
+    //set error message and the place it should show
+    {
+      message: "Password dose not match",
+      path: ["confirmPassword"],
+    }
+  )
 export default function Home() {
   const [opened, { open, close }] = useDisclosure(false);
 
@@ -90,14 +108,18 @@ export default function Home() {
     //TIP : get value of currently filled form with variable "form.values"
 
     if (form.values.plan === "funrun") price = 500;
+    else if (form.values.plan === "mini") price = 800;
+    else if (form.values.plan === "half") price = 1200;
+    else if (form.values.plan === "full") price = 1500;
     //check the rest plans by yourself
     //TIP : check /src/app/libs/runningPlans.js
-
+    if(form.values.hasCoupon&&form.values.coupon==="CMU2023"){
+      return price*0.7;
+    }
     //check discount here
 
     return price;
   };
-
   return (
     <div>
       <Container size="500px">
@@ -175,7 +197,7 @@ export default function Home() {
           </Stack>
         </form>
 
-        <Footer year={2023} fullName="Chayanin Suatap" studentId="650610560" />
+        <Footer year={2023} fullName="Rungthip Phongsupasa" studentId="650610803" />
       </Container>
 
       <TermsAndCondsModal opened={opened} close={close} />
